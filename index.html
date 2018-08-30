@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>MineSkull Printer</title>
+  <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+    <style>
+        body {
+          margin: 0px;
+          padding: 0px;
+          font-family: "Microsoft YaHei";
+        }
+        .container{
+          margin: 0 auto;
+          width: 1000px;
+          padding: 60px 0;
+        }
+        .main{
+          background-color: #f5f5f5;
+        }
+        .clear:after{
+          content:"";
+          display:block;
+          height:0;
+          visibility:hidden;
+          clear:both;
+        }
+        .left{
+          float:left;
+        }
+        .right{
+          float:right;
+        }
+        .main .left,
+        .main .right{
+          width: 50%;
+        }
+        .main h1{
+          font-weight: normal;
+        }
+        .main h1:after{
+          content: "";
+          display: block;
+          height: 3px;
+          background-color: #3782e5;
+          width: 20%;
+          margin-top: 30px;
+        }
+        input{
+          background: none;
+          outline: none;
+          border: none;
+        }
+        input[type=text]{
+          background-color: #fff;
+          padding: 10px;
+        }
+
+        input[type=submit]{
+          background-color: #66ccff;
+          padding: 10px 15px;
+          margin-right: 10px;
+          color: #ffff;
+        }
+
+        .main .btnbox{
+          padding-top: 20px;
+        }
+        .userinfo{
+          display: none;
+        }
+        .userinfobox{
+          color: #999;
+          font-size: 13px;
+          padding-top: 20px;
+        }
+
+        .status{
+          color: #4f7dad;
+        }
+        #c{
+          height: 480px;
+          width: 640px;
+        }
+
+        @media print{
+          @page {size: landscape}
+
+          .main .container{
+            display: none;
+          }
+        }
+      </style>
+      <div class="main">
+        <div class="container">
+          <h1>MineSkull Printer</h1>
+          <div class="content clear">
+            <div class="left">
+              <p>Minecraft ID</p>
+              <input type="text" id="username" required placeholder="Username">
+              <div class="btnbox">
+                <input type="submit" id="doSkin" value="Generate">
+                <input type="submit" id="doDownload" value="Download">
+                <input type="submit" id="doPrint" value="Print">
+              </div>
+              <div class="userinfobox">
+                <div class="userinfo">
+                  <p>Username: <span id="info_username"></span></p>
+                  <p>UUID: <span id="info_uuid"></span></p>
+                </div>
+                <p class="status" id="status"></p>
+              </div>
+            </div>
+            <div class="right">
+              <p>Skin</p>
+              <img src="" id="skinbodyimg">
+              <img src="" id="skinimg">
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="canvas">
+        <div class="container">
+          <canvas width="3200" height="2400" id="c"></canvas>
+        </div>
+      </div>
+      <div class="main">
+        <div class="container">
+          <p>Created by <a href="http://flag.moe/">Nekotora</a></p>
+          <p>API from <a href="https://crafatar.com/">Crafatar</a> / <a href="https://api.minetools.eu/">Minetools.eu</a></p>
+        </div>
+      </div>
+  <script>
+    $(function(){
+      $('#skinimg').on('load',function() {
+        rander();
+      })
+    })
+    var image;
+    var user;
+    function getUser(){
+      $('#status').text('Loading minecraft user info...')
+      $.ajax({
+        method: "GET",
+        dataType: "json",
+        url: "https://api.minetools.eu/uuid/"+ document.getElementById("username").value,
+        success: function(data){
+          console.log(data)
+          user = data;
+          $('.userinfo').slideDown()
+          $("#info_username").text(data.name)
+          $("#info_uuid").text(data.id)
+          if(data.id=='null') alert('Minecraft User Not Found.')
+          getSkin();
+        },
+        error: function( jqXHR, textStatus, errorThrown){
+          alert('Get Minecraft Userinfo Failed.\n'+textStatus+'.'+errorThrown)
+        }
+      })
+    }
+    function getSkin(){
+      $('#status').text('Loading minecraft user skin...')
+      $("#skinbodyimg").attr('src','./proxy.php?skin=body&uuid='+user.id);
+      $("#skinimg").attr('src','./proxy.php?uuid='+user.id);
+    }
+
+    $('#doSkin').click(function(){
+      getUser();
+    })
+    
+    $('#doDownload').click(function(){
+      downloadFile('skull_'+user.name+'.png', document.getElementById('c').toDataURL("image/png"));
+    })
+
+    $('#doPrint').click(function(){
+      window.print()
+    })
+
+    function downloadFile(fileName, content){
+      var aLink = document.createElement('a');
+      aLink.download = fileName;
+      aLink.href = content;
+      aLink.click();
+    }
+    
+
+    var canvas = document.getElementById('c');
+    var ctx = canvas.getContext('2d');
+
+    ctx.imageSmoothingEnabled = false;
+    ctx.mozImageSmoothingEnabled = false;
+    ctx.webkitImageSmoothingEnabled = false;
+    ctx.msImageSmoothingEnabled = false;
+
+    var nbmap
+    var bmap;
+
+    function rander() {
+      $('#status').text('Randeing Skull...')
+      var image = document.getElementById("skinimg")
+      console.log(image)
+      var head_layer1 = ctx.drawImage(image, 0, 0, 32, 16, 0, 0,32,16);
+      var head_layer2 = ctx.drawImage(image, 32, 0, 32, 16, 0, 0,32,16);
+      console.log(head_layer2)
+      // 把脖子垂直翻转到脸下面
+      bmap = ctx.getImageData(16, 0, 8, 8);
+      ctx.fillStyle="#ffffff";  
+      ctx.beginPath();  
+      ctx.fillRect(16,0,8,8);  
+      ctx.closePath();
+
+      nbmap = ctx.getImageData(16, 0, 8, 8);
+      
+      // 暴力图片垂直翻转
+      for (let i = 8; i > 0; i--) {
+        target_row = 8-i;
+        console.log('row','---------------------')
+        console.log('row',i)
+        for (let k = 0; k < 32; k++) {
+          console.log('p-form',  ((i-1)*8)*4+k ,'p-to',((target_row)*8)*4+k,'K',k,'data-form',bmap.data[((i-1)*8)*4+k],'data-to',nbmap.data[((target_row)*8)*4+k])
+          nbmap.data[((target_row)*8)*4+k] = bmap.data[((i-1)*8)*4+k]
+          
+        }
+      }
+
+      bmap = nbmap
+
+      ctx.putImageData(bmap, 8, 16);
+
+      // 放大图片
+      var zoom = 100;
+      ctx.drawImage(canvas, 0, 0, 64, 24, 0, 0, 64*zoom, 24*zoom);
+
+      ctx.fillStyle="#ffffff";  
+      ctx.beginPath();  
+      ctx.fillRect(0,0,32,32);  
+      ctx.closePath();
+
+      $('#status').text('')
+    };
+  </script>
+  <script type="text/javascript" src="http://tajs.qq.com/stats?sId=30582263" charset="UTF-8"></script>
+</body>
+</html>

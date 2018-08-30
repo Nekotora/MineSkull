@@ -223,7 +223,6 @@
         for (let k = 0; k < 32; k++) {
           console.log('p-form',  ((i-1)*8)*4+k ,'p-to',((target_row)*8)*4+k,'K',k,'data-form',bmap.data[((i-1)*8)*4+k],'data-to',nbmap.data[((target_row)*8)*4+k])
           nbmap.data[((target_row)*8)*4+k] = bmap.data[((i-1)*8)*4+k]
-          
         }
       }
 
@@ -231,13 +230,23 @@
 
       ctx.putImageData(bmap, 8, 16);
 
+      //清空画面中无用部分
+      ctx.fillStyle="#ffffff";  
+      ctx.beginPath();  
+      ctx.fillRect(0,0,8,8);  
+      ctx.closePath();
+      ctx.beginPath();  
+      ctx.fillRect(16,0,16,8);  
+      ctx.closePath();
+
       // 放大图片
       var zoom = 100;
       ctx.drawImage(canvas, 0, 0, 64, 24, 0, 0, 64*zoom, 24*zoom);
 
+      // 清空画面中放大前图像
       ctx.fillStyle="#ffffff";  
       ctx.beginPath();  
-      ctx.fillRect(0,0,32,32);  
+      ctx.fillRect(0,0,32,32);
       ctx.closePath();
 
       $('#status').text('')
